@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Envanter Yönetimi</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        body { background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h1 { color: #1a237e; margin-bottom: 30px; text-align: center; }
+        
+        .form-group { display: flex; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; align-items: center; }
+        .form-group input, .form-group select { flex: 1; min-width: 130px; padding: 10px 14px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #1a237e; }
+        
+        .btn { padding: 10px 25px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-add { background: #1a237e; color: white; }
+        .btn-add:hover { background: #0d1457; }
+        .btn-edit { background: #f57f17; color: white; padding: 5px 14px; margin-right: 4px; }
+        .btn-edit:hover { background: #e65100; }
+        .btn-delete { background: #d32f2f; color: white; padding: 5px 14px; }
+        .btn-delete:hover { background: #b71c1c; }
+        .btn-stock { background: #1976d2; color: white; padding: 3px 10px; font-size: 16px; font-weight: bold; border: none; border-radius: 4px; cursor: pointer; margin: 0 2px; }
+        .btn-stock:hover { background: #0d47a1; }
+        .btn-stock-minus { background: #d32f2f; }
+        .btn-stock-minus:hover { background: #b71c1c; }
+        .btn-category { background: #4caf50; color: white; padding: 10px 18px; }
+        .btn-category:hover { background: #388e3c; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #e0e0e0; }
+        th { background: #1a237e; color: white; }
+        tr:hover { background: #f5f5f5; }
+        
+        #message { padding: 10px; margin-bottom: 20px; border-radius: 5px; display: none; }
+        .success { background: #c8e6c9; color: #2e7d32; display: block !important; }
+        .error { background: #ffcdd2; color: #c62828; display: block !important; }
+
+        .category-tag { display: inline-block; padding: 2px 12px; background: #e8f5e9; color: #2e7d32; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .category-section { margin: 20px 0; padding: 18px; background: #f5f5f5; border-radius: 8px; border-left: 4px solid #4caf50; }
+        .category-section h3 { color: #2e7d32; margin-bottom: 12px; }
+        .category-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .category-item { background: white; padding: 6px 14px; border-radius: 16px; border: 1px solid #c8e6c9; font-size: 13px; }
+
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal-content { background: white; margin: 8% auto; padding: 25px; border-radius: 10px; width: 450px; max-width: 90%; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+        .modal-header h2 { color: #1a237e; }
+        .modal-close { font-size: 26px; font-weight: bold; color: #aaa; cursor: pointer; }
+        .modal-close:hover { color: #000; }
+        .modal-body input, .modal-body select { width: 100%; padding: 10px; margin-bottom: 12px; border: 2px solid #e0e0e0; border-radius: 6px; font-size: 14px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 15px; }
+        .btn-save { background: #1a237e; color: white; padding: 10px 25px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-save:hover { background: #0d1457; }
+        .btn-cancel { background: #e0e0e0; color: #333; padding: 10px 25px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-cancel:hover { background: #bdbdbd; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1> Envanter Yönetimi</h1>
+    
+    <div id="message"></div>
+    
+    <!-- Ürün Ekle -->
+    <div class="form-group">
+        <input type="text" id="productName" placeholder="Ürün Adı">
+        <input type="number" id="productPrice" placeholder="Fiyat (₺)">
+        <input type="number" id="productStock" placeholder="Stok">
+        <select id="productCategory"><option value="">Kategori Seçin</option></select>
+        <button class="btn btn-add" onclick="addProduct()"> Ekle</button>
+    </div>
+
+    <!-- Kategori Yönetimi -->
+    <div class="category-section">
+        <h3> Kategori Yönetimi</h3>
+        <div style="display:flex;gap:10px;margin-bottom:10px;">
+            <input type="text" id="categoryName" placeholder="Yeni Kategori" style="flex:1;padding:10px;border:2px solid #e0e0e0;border-radius:6px;">
+            <button class="btn btn-category" onclick="addCategory()"> Kategori Ekle</button>
+        </div>
+        <div id="categoryList" class="category-list"></div>
+    </div>
+    
+    <!-- Ürün Listesi -->
+    <h2>📋 Ürünler</h2>
+    <table>
+        <thead><tr><th>ID</th><th>Ürün Adı</th><th>Kategori</th><th>Fiyat</th><th>Stok</th><th>Stok İşlem</th><th>İşlemler</th></tr></thead>
+        <tbody id="productList"></tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header"><h2> Düzenle</h2><span class="modal-close" onclick="closeModal()">&times;</span></div>
+        <div class="modal-body">
+            <input type="hidden" id="editId">
+            <input type="text" id="editName" placeholder="Ürün Adı">
+            <input type="number" id="editPrice" placeholder="Fiyat">
+            <input type="number" id="editStock" placeholder="Stok">
+            <select id="editCategory"><option value="">Kategori Seçin</option></select>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-cancel" onclick="closeModal()">İptal</button>
+            <button class="btn btn-save" onclick="updateProduct()">Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+window.onload = function() {
+    loadCategories();
+    loadProducts();
+    loadCategoryList();
+};
+
+function loadCategories() {
+    fetch('api/categories.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const s1 = document.getElementById('productCategory');
+                const s2 = document.getElementById('editCategory');
+                s1.innerHTML = '<option value="">Kategori Seçin</option>';
+                s2.innerHTML = '<option value="">Kategori Seçin</option>';
+                data.data.forEach(c => {
+                    s1.innerHTML += `<option value="${c.KategoriID}">${c.KategoriADI}</option>`;
+                    s2.innerHTML += `<option value="${c.KategoriID}">${c.KategoriADI}</option>`;
+                });
+            }
+        });
+}
+
+function loadCategoryList() {
+    fetch('api/categories.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const el = document.getElementById('categoryList');
+                el.innerHTML = '';
+                data.data.forEach(c => {
+                    el.innerHTML += `<span class="category-item"> ${c.KategoriADI}</span>`;
+                });
+            }
+        });
+}
+
+function addCategory() {
+    const name = document.getElementById('categoryName').value.trim();
+    if (!name) return showMessage('Kategori adı girin!', 'error');
+    fetch('api/add_category.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ KategoriADI: name })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Kategori eklendi!', 'success');
+            document.getElementById('categoryName').value = '';
+            loadCategories();
+            loadCategoryList();
+        } else {
+            showMessage('Hata: ' + data.message, 'error');
+        }
+    });
+}
+
+function loadProducts() {
+    fetch('api/products.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const tbody = document.getElementById('productList');
+                tbody.innerHTML = '';
+                if (data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Ürün yok</td></tr>';
+                    return;
+                }
+                data.data.forEach(p => {
+                    const cat = p.KategoriADI || 'Kategorisiz';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${p.UrunID}</td>
+                            <td>${p.UrunADI}</td>
+                            <td><span class="category-tag">${cat}</span></td>
+                            <td>${p.Fiyat} ₺</td>
+                            <td>${p.StokAdedi}</td>
+                            <td>
+                                <button class="btn-stock btn-stock-minus" onclick="updateStock(${p.UrunID},'decrease')">−</button>
+                                <button class="btn-stock" onclick="updateStock(${p.UrunID},'increase')">+</button>
+                            </td>
+                            <td>
+                                <button class="btn btn-edit" onclick="openModal(${p.UrunID})"></button>
+                                <button class="btn btn-delete" onclick="deleteProduct(${p.UrunID})"></button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+        });
+}
+
+function addProduct() {
+    const name = document.getElementById('productName').value.trim();
+    const price = document.getElementById('productPrice').value.trim();
+    const stock = document.getElementById('productStock').value.trim();
+    const cat = document.getElementById('productCategory').value;
+    
+    if (!name || !price || !stock) {
+        return showMessage('Tüm alanları doldurun!', 'error');
+    }
+    if (!cat) {
+        return showMessage('Kategori seçin!', 'error');
+    }
+    
+    fetch('api/add_product.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            UrunADI: name,
+            Fiyat: parseFloat(price),
+            StokAdedi: parseInt(stock),
+            KategoriID: parseInt(cat)
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Ürün eklendi!', 'success');
+            document.getElementById('productName').value = '';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productStock').value = '';
+            document.getElementById('productCategory').value = '';
+            loadProducts();
+        } else {
+            showMessage('Hata: ' + data.message, 'error');
+        }
+    });
+}
+
+function deleteProduct(id) {
+    if (!confirm('Silmek istediğine emin misin?')) return;
+    fetch(`api/delete_product.php?id=${id}`, { method: 'DELETE' })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) { showMessage('Silindi!', 'success'); loadProducts(); }
+            else { showMessage('Hata: ' + data.message, 'error'); }
+        });
+}
+
+function openModal(id) {
+    fetch('api/products.php')
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                const p = data.data.find(x => x.UrunID === id);
+                if (p) {
+                    document.getElementById('editId').value = p.UrunID;
+                    document.getElementById('editName').value = p.UrunADI;
+                    document.getElementById('editPrice').value = p.Fiyat;
+                    document.getElementById('editStock').value = p.StokAdedi;
+                    document.getElementById('editCategory').value = p.KategoriID || '';
+                    document.getElementById('editModal').style.display = 'block';
+                }
+            }
+        });
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+window.onclick = function(e) {
+    if (e.target === document.getElementById('editModal')) closeModal();
+};
+
+function updateProduct() {
+    const id = document.getElementById('editId').value;
+    const name = document.getElementById('editName').value.trim();
+    const price = document.getElementById('editPrice').value.trim();
+    const stock = document.getElementById('editStock').value.trim();
+    const cat = document.getElementById('editCategory').value;
+    
+    if (!name || !price || !stock) {
+        return showMessage('Tüm alanları doldurun!', 'error');
+    }
+    
+    fetch('api/update_product.php', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            UrunID: parseInt(id),
+            UrunADI: name,
+            Fiyat: parseFloat(price),
+            StokAdedi: parseInt(stock),
+            KategoriID: cat ? parseInt(cat) : null
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            showMessage('Güncellendi!', 'success');
+            closeModal();
+            loadProducts();
+        } else {
+            showMessage('Hata: ' + data.message, 'error');
+        }
+    });
+}
+
+function updateStock(id, action) {
+    fetch('api/update_stock.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ UrunID: id, action: action })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) { showMessage(data.message, 'success'); loadProducts(); }
+        else { showMessage('Hata: ' + data.message, 'error'); }
+    });
+}
+
+function showMessage(text, type) {
+    const msg = document.getElementById('message');
+    msg.textContent = text;
+    msg.className = type;
+    setTimeout(() => { msg.className = ''; }, 3500);
+}
+</script>
+</body>
+</html>
